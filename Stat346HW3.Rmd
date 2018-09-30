@@ -1,0 +1,29 @@
+---
+title: "Stat346HW3"
+author: "Daniel Park"
+date: "9/30/2018"
+output: pdf_document
+---
+
+```{r}
+suppressMessages(library("tidyverse"))
+suppressMessages(library("plyr"))
+
+dat <- read.table('ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.txt', 
+                 skip=71,header=FALSE)
+dat <- rename(dat,Year=V1, Month=V2, DecimalDate=V3, AverageCO2=V4,
+              Interpolated=V5, Trend=V6, nDays=V7)
+ 
+tempData <- data.frame()
+for(i in 1977:2018){
+  temp = read.table(paste0('ftp://aftp.cmdl.noaa.gov/data/meteorology/',
+                           'in-situ/mlo/met_mlo_insitu_1_obop_hour_',i,'.txt'))
+  
+  temp <- temp[,c(2:5,10)]
+  colnames(temp) <- c("Year", "Month", "Day", "Hour", "TempCelsius")
+  
+  by_month <- temp %>% group_by(Month)
+  tempData <- bind_rows(tempData, by_month %>%
+                        summarise(monthlyAvg=mean(TempCelsius[TempCelsius>-999.9])))
+}
+```
