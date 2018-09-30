@@ -1,0 +1,63 @@
+---
+title: "SP02"
+author: "Daniel Park"
+date: "9/30/2018"
+output: pdf_document
+---
+
+```{r}
+library(tidyverse)
+
+n.sim = 1000 
+sim.df = data.frame("index"=1:n.sim) %>% group_by(index)
+set.seed(10) 
+x_vals <- runif(15)
+
+sim.df = sim.df %>%
+  do("index"=.$index, "x"=x_vals, "err"=rnorm(15)) %>%
+  do("index"=.$index, "x" = .$x, "y" = 3 + 5*.$x + .$err) %>%
+  do("index"=.$index, "model" = lm(y~x, data=.))
+
+sim.coefs = sim.df %>%
+  do(data.frame("index"=.$index, "intercept" = coef(.$mod)[1], 
+                "slope" = coef(.$mod)[2]))
+
+ggplot(sim.coefs, aes(x=slope)) +
+  geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth = .3) #  +
+  #stat_function(fun = density(sim.coefs$slope), fill = "#FF6666")
+```
+
+```{r}
+my.df = data.frame(x=x_vals, y=3+5*x_vals)
+my.coefs = sim.coefs[sample(nrow(sim.coefs), 50),]
+
+ggplot(data=my.df) +
+  geom_point(aes(x=x, y=y)) +
+  geom_abline(data=my.coefs, aes(slope=slope, intercept=intercept), color=1:50)
+
+```
+
+```{r}
+options(warn = -1)
+x.h <- x_vals[13]
+
+sim.coefs <- sim.coefs %>% mutate(y.h = intercept + slope*x.h)
+
+ggplot(sim.coefs, aes(x=y.h)) +
+  geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth = .1) +
+  geom_density(alpha=0.2, fill="pink") +
+  geom_point(data = sim.coefs, aes(x=mean(y.h),y=0), shape=17, size = 3,color="blue")
+
+(mean_y.h <- mean(sim.coefs$y.h))
+(variance_y.h <- var(sim.coefs$y.h))
+```
+
+```{r}
+(theory.mean_yh <- 3+5*x.h)
+(theory.variance_yh <- var(3+5*x_vals)*(1/length(x_vals) + (x.h-mean(x_vals))^2/sum((x_vals-mean(x_vals))^2)))
+```
+
+```{r}
+sim.coefs <- sim.coefs %>% mutate(sim_y.h = 3 + 5*x.h+rnorm(1))
+
+```
