@@ -1,2 +1,2 @@
-# STAT341
-programs needed for STAT 341
+# Statistics HW
+Some code needed for STAT homework
